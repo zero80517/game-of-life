@@ -136,7 +136,7 @@ public class Game : MonoBehaviour
     }
 
     /// <summary>
-    /// 
+    /// Implementation of rules to create new generation
     /// </summary>
     void PopulationControl()
     {

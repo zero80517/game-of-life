@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Game.cs" />
     <Compile Include="Assets\Scripts\Cell.cs" />
+    <Compile Include="Assets\Scripts\GridOverlay.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
