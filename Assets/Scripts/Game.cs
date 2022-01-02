@@ -1,11 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+using System.Xml.Serialization;
 
 public class Game : MonoBehaviour
 {
     private static int SCREEN_WIDTH = 64;   //units = 1024 pixels / 16 pixels
     private static int SCREEN_HEIGHT = 48;  //units = 768 pixels / 16 pixels
+
+    public HUD hud;
 
     public float speed = 0.1f;              //seconds for 1 frame 
 
@@ -18,6 +22,9 @@ public class Game : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        EventManager.StartListening("SavePattern", SavePattern);
+        EventManager.StartListening("LoadPattern", LoadPattern);
+
         PlaceCells(0);
     }
 
@@ -43,32 +50,133 @@ public class Game : MonoBehaviour
         UserInput();
     }
 
-    void UserInput()
+    private void LoadPattern()
     {
-        if (Input.GetMouseButtonDown(0))
+        string path = "Patterns";
+
+        if (!Directory.Exists(path))
         {
-            Vector2 mousePoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            return;
+        }
 
-            int x = Mathf.RoundToInt(mousePoint.x);
-            int y = Mathf.RoundToInt(mousePoint.y);
+        XmlSerializer serializer = new XmlSerializer(typeof(Pattern));
+        string patternName = hud.loadDialog.patternName.
+            options[hud.loadDialog.patternName.value].text;
+        path += $"/{patternName}.xml";
 
-            if (x >= 0 && y >= 0 && x < SCREEN_WIDTH && y < SCREEN_HEIGHT)
+        StreamReader reader = new StreamReader(path);
+        Pattern pattern = (Pattern)serializer.Deserialize(reader.BaseStream);
+        reader.Close();
+
+        bool isAlive;
+
+        int x = 0, y = 0;
+
+        Debug.Log(pattern.patternString);
+
+        foreach (char c in pattern.patternString)
+        {
+            if (c.ToString() == "1")
             {
-                // We are in bounds
-                grid[x, y].SetAlive(!grid[x, y].isAlive);
+                isAlive = true;
+            }
+            else
+            {
+                isAlive = false;
+            }
+
+            grid[x, y].SetAlive(isAlive);
+
+            x++;
+            if (x == SCREEN_WIDTH)
+            {
+                x = 0;
+                y++;
+            }
+        }
+    }
+
+    private void SavePattern()
+    {
+        string path = "Patterns";
+
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
+
+        Pattern pattern = new Pattern();
+
+        string patternString = null;
+
+        for (int y = 0; y < SCREEN_HEIGHT; y++)
+        {
+            for (int x = 0; x < SCREEN_WIDTH; x++)
+            {
+                if (grid[x, y].isAlive == false)
+                {
+                    patternString += "0";
+                }
+                else
+                {
+                    patternString += "1";
+                }
             }
         }
 
-        if (Input.GetKeyUp(KeyCode.P))
-        {
-            // Pause simulation
-            simulationEnabled = false;
-        }
+        pattern.patternString = patternString;
 
-        if (Input.GetKeyUp(KeyCode.B))
+        XmlSerializer serializer = new XmlSerializer(typeof(Pattern));
+
+        StreamWriter writer = new StreamWriter(path + $"/{hud.saveDialog.patternName.text}.xml");
+        serializer.Serialize(writer.BaseStream, pattern);
+        writer.Close();
+
+        Debug.Log(pattern.patternString);
+    }
+
+    void UserInput()
+    {
+        // To prevent activate cells behind the hud and load different dialogs on "L" or "S" keys
+        if (!hud.isActive)
         {
-            // Build Simulation / Resume
-            simulationEnabled = true;
+            if (Input.GetMouseButtonDown(0))
+            {
+                Vector2 mousePoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+                int x = Mathf.RoundToInt(mousePoint.x);
+                int y = Mathf.RoundToInt(mousePoint.y);
+
+                if (x >= 0 && y >= 0 && x < SCREEN_WIDTH && y < SCREEN_HEIGHT)
+                {
+                    // We are in bounds
+                    grid[x, y].SetAlive(!grid[x, y].isAlive);
+                }
+            }
+
+            if (Input.GetKeyUp(KeyCode.P))
+            {
+                // Pause simulation
+                simulationEnabled = false;
+            }
+
+            if (Input.GetKeyUp(KeyCode.B))
+            {
+                // Build Simulation / Resume
+                simulationEnabled = true;
+            }
+
+            if (Input.GetKeyUp(KeyCode.S))
+            {
+                // Save Pattern
+                hud.showSaveDialog();
+            }
+
+            if (Input.GetKeyUp(KeyCode.L))
+            {
+                // Load Pattern
+                hud.showLoadDialog();
+            }
         }
     }
 

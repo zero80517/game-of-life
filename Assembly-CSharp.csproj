@@ -54,8 +54,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Game.cs" />
+    <Compile Include="Assets\Scripts\Pattern.cs" />
     <Compile Include="Assets\Scripts\Cell.cs" />
     <Compile Include="Assets\Scripts\GridOverlay.cs" />
+    <Compile Include="Assets\Scripts\SaveDialog.cs" />
+    <Compile Include="Assets\Scripts\HUD.cs" />
+    <Compile Include="Assets\Scripts\LoadDialog.cs" />
+    <Compile Include="Assets\Scripts\EventManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
