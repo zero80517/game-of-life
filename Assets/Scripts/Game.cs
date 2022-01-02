@@ -11,45 +11,98 @@ public class Game : MonoBehaviour
 
     private float timer = 0;
 
+    public bool simulationEnabled = false;  // don't start simulation
+
     Cell[,] grid = new Cell[SCREEN_WIDTH, SCREEN_HEIGHT];
 
     // Start is called before the first frame update
     void Start()
     {
-        PlaceCells();
+        PlaceCells(0);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (timer >= speed)
+        if (simulationEnabled)
         {
-            timer = 0f;
+            if (timer >= speed)
+            {
+                timer = 0f;
 
-            CountNeighbors();
+                CountNeighbors();
 
-            PopulationControl();
+                PopulationControl();
+            }
+            else
+            {
+                timer += Time.deltaTime;
+            }
         }
-        else
+
+        UserInput();
+    }
+
+    void UserInput()
+    {
+        if (Input.GetMouseButtonDown(0))
         {
-            timer += Time.deltaTime;
+            Vector2 mousePoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+            int x = Mathf.RoundToInt(mousePoint.x);
+            int y = Mathf.RoundToInt(mousePoint.y);
+
+            if (x >= 0 && y >= 0 && x < SCREEN_WIDTH && y < SCREEN_HEIGHT)
+            {
+                // We are in bounds
+                grid[x, y].SetAlive(!grid[x, y].isAlive);
+            }
         }
-        
+
+        if (Input.GetKeyUp(KeyCode.P))
+        {
+            // Pause simulation
+            simulationEnabled = false;
+        }
+
+        if (Input.GetKeyUp(KeyCode.B))
+        {
+            // Build Simulation / Resume
+            simulationEnabled = true;
+        }
     }
 
     /// <summary>
-    /// Initialize the first cell positions
+    /// Create cell instantiates
+    /// 0 - all cells are dead
+    /// 1 - random cells are alive
     /// </summary>
-    void PlaceCells()
+    void PlaceCells(int type)
     {
-        for (int y = 0; y < SCREEN_HEIGHT; y++)
+        if (type == 0)
         {
-            for (int x = 0; x < SCREEN_WIDTH; x++)
+            for (int y = 0; y < SCREEN_HEIGHT; y++)
             {
-                Cell cell = Instantiate(Resources.Load("Prefabs/Cell", typeof(Cell)), 
-                    new Vector2(x, y), Quaternion.identity) as Cell;
-                grid[x, y] = cell;
-                grid[x, y].SetAlive(RandomAliveCell());
+                for (int x = 0; x < SCREEN_WIDTH; x++)
+                {
+                    Cell cell = Instantiate(Resources.Load("Prefabs/Cell", typeof(Cell)),
+                        new Vector2(x, y), Quaternion.identity) as Cell;
+                    grid[x, y] = cell;
+                    grid[x, y].SetAlive(false);
+                }
+            }
+        }
+        else if (type == 1)
+        {
+            for (int y = 0; y < SCREEN_HEIGHT; y++)
+            {
+                for (int x = 0; x < SCREEN_WIDTH; x++)
+                {
+                    Cell cell = Instantiate(Resources.Load("Prefabs/Cell", typeof(Cell)),
+                        new Vector2(x, y), Quaternion.identity) as Cell;
+                    grid[x, y] = cell;
+                    grid[x, y].SetAlive(RandomAliveCell());
+                }
             }
         }
     }
